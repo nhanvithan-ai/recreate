@@ -1,157 +1,150 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { PRODUCTS, CATEGORIES } from "../data";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { CATEGORIES } from "../data";
 import { useShop } from "../context/ShopContext";
-import { motion } from "motion/react";
-import { Heart, ShoppingCart, ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft, LayoutGrid } from "lucide-react";
+import { useState, useEffect } from "react";
+import { subscribeToProducts } from "../services/productService";
+import { Product } from "../types";
+import ProductCard from "../components/ProductCard";
+import ParticleEmbers from "../components/ParticleEmbers";
 
 export default function CategoryPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, wishlist, toggleWishlist } = useShop();
+  const { wishlist } = useShop();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = subscribeToProducts((data) => {
+      setProducts(data);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
 
   const category = CATEGORIES.find((c) => c.id === id);
 
-  const categoryProducts = PRODUCTS.filter(
-    (product) => product.category === id
+  const categoryProducts = products.filter(
+    (product) => product.category.toLowerCase() === id?.toLowerCase()
   );
 
   if (!category) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white text-4xl">
+      <div className="min-h-screen flex items-center justify-center bg-black text-white text-4xl font-serif">
         Category Not Found
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-
+    <div className="min-h-screen bg-black text-white overflow-hidden relative">
+      <ParticleEmbers />
+      
       {/* BACK BUTTON */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 z-20 p-3 rounded-full bg-black/40 border border-white/10"
+        className="fixed top-8 left-8 z-[110] p-4 rounded-2xl bg-black/40 border border-white/10 hover:border-gold/40 hover:bg-gold/10 transition-all group backdrop-blur-xl"
       >
-        <ArrowLeft />
+        <ArrowLeft className="w-6 h-6 text-gold group-hover:-translate-x-1 transition-transform" />
       </button>
 
       {/* HERO SECTION */}
-      <section className="relative h-[75vh] flex items-center justify-center">
-
+      <section className="relative h-[65vh] flex items-center justify-center overflow-hidden">
         <motion.div
-          initial={{ scale: 1.2 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2 }}
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5 }}
           className="absolute inset-0"
           style={{
             backgroundImage: `url(${category.image})`,
             backgroundSize: "cover",
             backgroundPosition: "center"
           }}
-        />
-
-        <div className="absolute inset-0 bg-black/70" />
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black" />
+        </motion.div>
 
         <div className="relative z-10 text-center px-6 max-w-5xl">
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="uppercase tracking-[0.5em] text-[10px] md:text-sm text-gold mb-6 font-accent"
+          >
+            PREMIUM ANTHOLOGY
+          </motion.p>
 
-          <p className="uppercase tracking-[0.5em] text-[11px] md:text-sm text-yellow-300 mb-6">
-            PREMIUM COLLECTION
-          </p>
-
-          <h1 className="text-5xl md:text-8xl font-serif font-semibold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-orange-400">
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-6xl md:text-9xl font-display font-semibold gold-gradient-text leading-none"
+          >
             {category.title}
-          </h1>
+          </motion.h1>
 
-          <p className="mt-8 text-lg md:text-2xl italic text-white/75">
-            {category.subtitle}
-          </p>
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: 100 }}
+            transition={{ delay: 0.5, duration: 1 }}
+            className="h-[1px] bg-gold/50 mx-auto my-8" 
+          />
 
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-lg md:text-3xl italic text-pearl/70 font-serif tracking-widest"
+          >
+            {category.description}
+          </motion.p>
         </div>
       </section>
 
-      {/* PRODUCTS */}
-      <section className="max-w-7xl mx-auto px-6 py-28">
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
-
-          {categoryProducts.map((product, idx) => {
-
-            const isLiked = wishlist.includes(product.id);
-
-            return (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.08 }}
-                className="glass rounded-3xl overflow-hidden border border-white/10"
-              >
-
-                {/* IMAGE */}
-                <div className="relative group">
-
-                  <img
-                    src={product.images[0]}
-                    className="w-full h-[320px] object-cover"
-                  />
-
-                  {/* LIKE BUTTON */}
-                  <button
-                    onClick={() => toggleWishlist(product.id)}
-                    className="absolute top-4 right-4 p-2 bg-black/40 rounded-full"
-                  >
-                    <Heart
-                      className={
-                        isLiked
-                          ? "text-ember fill-ember"
-                          : "text-white"
-                      }
-                    />
-                  </button>
-
-                </div>
-
-                {/* INFO */}
-                <div className="p-5 space-y-3">
-
-                  <h3 className="text-lg font-serif">
-                    {product.name}
-                  </h3>
-
-                  {/* PRICE */}
-                  <div className="flex items-center justify-between">
-                    <p className="text-ember font-bold">
-                      ₹{product.price}
-                    </p>
-
-                    <p className="text-xs text-white/40 line-through">
-                      ₹{product.originalPrice}
-                    </p>
-                  </div>
-
-                  {/* ADD TO CART */}
-                  <button
-                    onClick={() =>
-                      addToCart(
-                        product,
-                        product.sizes[0],
-                        product.colors[0]
-                      )
-                    }
-                    className="w-full mt-2 py-3 bg-gradient-to-r from-ember to-glow text-black font-bold rounded-xl flex items-center justify-center gap-2"
-                  >
-                    <ShoppingCart size={16} />
-                    Add to Cart
-                  </button>
-
-                </div>
-
-              </motion.div>
-            );
-          })}
-
+      {/* PRODUCTS SECTION */}
+      <section className="max-w-7xl mx-auto px-6 py-32">
+        <div className="flex items-center justify-between mb-20">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center border border-gold/20">
+              <LayoutGrid className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-serif">Collection</h2>
+              <p className="text-[10px] text-pearl/40 uppercase tracking-[0.3em] mt-1">{categoryProducts.length} Products found</p>
+            </div>
+          </div>
         </div>
 
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-[40px] bg-white/5 animate-pulse" />
+            ))}
+          </div>
+        ) : categoryProducts.length === 0 ? (
+          <div className="py-40 text-center border border-dashed border-white/10 rounded-[60px] bg-white/[0.02]">
+            <p className="text-pearl/20 italic font-serif text-3xl tracking-widest underline decoration-gold/20 underline-offset-8">No products available</p>
+            <p className="text-[10px] text-gold/40 uppercase tracking-[0.4em] mt-8">New items arriving shortly</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
+            <AnimatePresence mode="popLayout">
+              {categoryProducts.map((product, idx) => (
+                <motion.div
+                  key={product.id}
+                  layout
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <ProductCard product={product} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
       </section>
     </div>
   );

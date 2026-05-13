@@ -1,13 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Product, CartItem, User, Order } from "../types";
+import { auth, db } from "../lib/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+
+const ADMIN_EMAILS = ["nhanvithan@gmail.com"];
 
 interface ShopContextType {
   cart: CartItem[];
   wishlist: string[];
   user: User | null;
   orders: Order[];
+  loading: boolean;
 
-  addToCart: (product: Product, size: string, color: string) => void;
+  addToCart: (product: Product, size: string, color: string, quantity?: number) => void;
   removeFromCart: (id: string, size: string, color: string) => void;
   updateQuantity: (id: string, size: string, color: string, delta: number) => void;
 
@@ -17,7 +23,6 @@ interface ShopContextType {
   openAuth: () => void;
   closeAuth: () => void;
 
-  login: (user: User) => void;
   logout: () => void;
 
   clearCart: () => void;
@@ -44,15 +49,48 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     safeParse("wishlist", [])
   );
 
-  const [user, setUser] = useState<User | null>(() =>
-    safeParse("user", null)
-  );
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [orders, setOrders] = useState<Order[]>(() =>
-    safeParse("orders", [])
-  );
+  const [orders, setOrders] = useState<Order[]>([]);
 
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const userData: User = {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+          isAdmin: firebaseUser.email ? ADMIN_EMAILS.includes(firebaseUser.email) : false
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid)
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any as Order));
+        setOrders(ordersData);
+      });
+      return () => unsubscribe();
+    } else {
+      setOrders([]);
+    }
+  }, [user]);
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -62,17 +100,12 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
 
-  useEffect(() => {
-    localStorage.setItem("user", JSON.stringify(user));
-  }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem("orders", JSON.stringify(orders));
-  }, [orders]);
-
   // ✅ SAFE ADD TO CART (SIZE + COLOR IS UNIQUE KEY)
-  const addToCart = (product: Product, size: string, color: string) => {
-    if (!size || !color) return;
+  const addToCart = (product: Product, size: string, color: string, qty = 1) => {
+    if (!size) {
+      console.warn("Size selection is required.");
+      return;
+    }
 
     setCart((prev) => {
       const existing = prev.find(
@@ -87,7 +120,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
           item.id === product.id &&
           item.selectedSize === size &&
           item.selectedColor === color
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + qty }
             : item
         );
       }
@@ -96,7 +129,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         ...prev,
         {
           ...product,
-          quantity: 1,
+          quantity: qty,
           selectedSize: size,
           selectedColor: color,
         },
@@ -146,11 +179,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const login = (userData: User) => setUser(userData);
-
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+    signOut(auth);
   };
 
   const clearCart = () => setCart([]);
@@ -165,6 +195,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         wishlist,
         user,
         orders,
+        loading,
         addToCart,
         removeFromCart,
         updateQuantity,
@@ -172,7 +203,6 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
         isAuthOpen,
         openAuth: () => setIsAuthOpen(true),
         closeAuth: () => setIsAuthOpen(false),
-        login,
         logout,
         clearCart,
         addOrder,

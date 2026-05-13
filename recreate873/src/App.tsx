@@ -1,5 +1,11 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { AnimatePresence } from "motion/react";
 
 // Components
@@ -17,18 +23,22 @@ import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
 import Profile from "./pages/Profile";
 import CategoryPage from "./pages/CategoryPage";
+import SearchResults from "./pages/SearchResults";
+import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
   return null;
 }
 
 function MainLayout({ children }: { children: React.ReactNode }) {
   const [showIntro, setShowIntro] = useState(() => {
-    // Only show intro once per session
     return !sessionStorage.getItem("introShown");
   });
 
@@ -43,7 +53,11 @@ function MainLayout({ children }: { children: React.ReactNode }) {
         {showIntro && <IntroVideo onComplete={handleIntroComplete} />}
       </AnimatePresence>
 
-      <div className={`transition-opacity duration-1000 ${showIntro ? "opacity-0" : "opacity-100"}`}>
+      <div
+        className={`transition-opacity duration-1000 ${
+          showIntro ? "opacity-0" : "opacity-100"
+        }`}
+      >
         <Navbar />
         <main>{children}</main>
         <Footer />
@@ -60,6 +74,7 @@ export default function App() {
         <ScrollToTop />
         <MainLayout>
           <Routes>
+            {/* Main routes */}
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
@@ -67,6 +82,12 @@ export default function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/category/:id" element={<CategoryPage />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Redirect all unknown routes to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </MainLayout>
       </Router>

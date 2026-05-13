@@ -87,22 +87,15 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Contact Form & Newsletter */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 pt-32 border-t border-white/5">
-          <div className="space-y-10">
-            <div>
-              <h4 className="text-3xl font-serif text-pearl">Artisan Direct</h4>
-              <p className="font-label text-silk italic text-lg mt-2">Inquire about custom tailoring or bridal couture.</p>
-            </div>
-            <form className="space-y-6" onSubmit={e => e.preventDefault()}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <input type="text" placeholder="Gilded Name" className="w-full bg-white/5 border border-white/5 rounded-2xl p-5 text-sm focus:border-gold transition-all outline-none" />
-                <input type="email" placeholder="Email Oracle" className="w-full bg-white/5 border border-white/5 rounded-2xl p-5 text-sm focus:border-gold transition-all outline-none" />
-              </div>
-              <textarea placeholder="Your message for our artisans..." rows={1} className="w-full bg-white/5 border border-white/5 rounded-2xl p-5 text-sm focus:border-gold transition-all outline-none min-h-[120px]" />
-              <button className="w-full sm:w-auto px-12 py-5 bg-gradient-to-r from-ember to-glow text-dawn font-accent text-[10px] uppercase tracking-[0.4em] font-bold rounded-2xl shadow-xl shadow-ember/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-4">
-                <Send className="w-4 h-4" />
-                <span>Dispatch Message</span>
+        {/* Newsletter Only */}
+        <div className="pt-32 border-t border-white/5 flex flex-col lg:flex-row justify-between items-center gap-12">
+          <div className="max-w-md">
+            <h4 className="text-3xl font-serif text-gold">Join the Atelier</h4>
+            <p className="font-label text-silk italic text-lg mt-2">Subscribe for early access to new collections.</p>
+            <form className="mt-8 relative group" onSubmit={e => e.preventDefault()}>
+              <input type="email" placeholder="Enter your email" className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-sm focus:border-gold transition-all outline-none pr-16" />
+              <button className="absolute right-3 top-1/2 -translate-y-1/2 p-3 bg-gold text-dawn rounded-xl hover:scale-105 transition-all">
+                <Send className="w-5 h-5" />
               </button>
             </form>
           </div>
@@ -123,7 +116,7 @@ export default function Footer() {
 
       {/* WhatsApp Floating Button */}
       <a 
-        href="https://wa.me/91XXXXXXXXXX?text=I'm interested in Recreate873 artistry."
+        href="https://wa.me/917075192712?text=Hi Recreate873, I'm interested in your products."
         target="_blank"
         className="fixed bottom-10 right-10 z-[80] w-16 h-16 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all group"
       >
@@ -141,7 +134,7 @@ export default function Footer() {
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="relative max-w-2xl w-full glass p-12 rounded-[50px] border-gold/20 overflow-hidden shadow-2xl">
                <button onClick={() => setActiveModal(null)} className="absolute top-8 right-8 text-pearl/40 hover:text-gold uppercase text-[10px] tracking-widest font-bold">Close ×</button>
                <h3 className="text-4xl font-serif text-gold mb-8 italic">
-                 {activeModal === 'story' ? 'The Manifest' : activeModal === 'artisanry' ? 'The Alchemy' : 'The Ethos'}
+                 {activeModal === 'story' ? 'The Story' : activeModal === 'artisanry' ? 'The Craft' : 'The Ethics'}
                </h3>
                <div className="space-y-6 text-pearl/70 font-serif italic text-xl leading-relaxed">
                   {activeModal === 'story' ? (

@@ -2,36 +2,20 @@ import { X } from "lucide-react";
 import { useShop } from "../context/ShopContext";
 import { motion, AnimatePresence } from "motion/react";
 import ParticleEmbers from "./ParticleEmbers";
+import { auth } from "../lib/firebase";
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 export default function AuthOverlay() {
-  const { isAuthOpen, closeAuth, login } = useShop();
+  const { isAuthOpen, closeAuth } = useShop();
 
-  // ═══════════════════════════════════════════
-  // FIREBASE CONFIG — ADD YOUR KEYS HERE
-  // ═══════════════════════════════════════════
-  /*
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  */
-  // ═══════════════════════════════════════════
-
-  const handleGoogleSignIn = () => {
-    // Simulated sign-in for demo purposes
-    // In production: use firebase.auth().signInWithPopup(provider)
-    const mockUser = {
-      uid: "mock_123",
-      displayName: "Vikram Aditya",
-      email: "vikram@aura.in",
-      photoURL: "https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram"
-    };
-    login(mockUser);
-    closeAuth();
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      closeAuth();
+    } catch (error) {
+      console.error("Auth Error:", error);
+    }
   };
 
   return (

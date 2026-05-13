@@ -15,13 +15,13 @@ export default function Orders() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      <h2 className="text-4xl md:text-5xl lg:text-6xl mb-12">Acquisition History</h2>
+      <h2 className="text-4xl md:text-5xl lg:text-6xl mb-12">Order History</h2>
 
       <div className="space-y-6">
         {orders.length === 0 ? (
           <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
             <Package className="w-12 h-12 text-white/10 mx-auto mb-4" />
-            <p className="text-white/40">No orders yet. Your style journey awaits.</p>
+            <p className="text-white/40">No orders yet.</p>
           </div>
         ) : (
           orders.map((order, idx) => (
@@ -49,7 +49,7 @@ export default function Orders() {
                       </div>
                       <div className="flex items-center text-xs text-white/40">
                         <CreditCard className="w-3 h-3 mr-1" />
-                        <span>${order.total}</span>
+                        <span>₹{order.total}</span>
                       </div>
                     </div>
                   </div>
@@ -80,10 +80,10 @@ export default function Orders() {
                     className="overflow-hidden border-t border-white/5"
                   >
                     <div className="p-8 bg-black/40">
-                      <h4 className="text-xs uppercase tracking-widest text-white/20 mb-6">Manifest Items</h4>
+                      <h4 className="text-xs uppercase tracking-widest text-white/20 mb-6 font-bold">Order Items</h4>
                       <div className="space-y-6">
                         {order.items.length === 0 ? (
-                          <p className="text-white/40 text-xs italic">Historical order data from before the artisan logging system update.</p>
+                          <p className="text-white/40 text-xs italic">Order items data not available.</p>
                         ) : (
                           order.items.map((item, i) => (
                             <div key={i} className="flex items-center justify-between">
@@ -96,13 +96,13 @@ export default function Orders() {
                                   <p className="text-[10px] text-white/40 uppercase tracking-widest">Qty: {item.quantity} | Size: {item.selectedSize}</p>
                                 </div>
                               </div>
-                              <span className="text-sm text-brand-gold">${item.price * item.quantity}</span>
+                              <span className="text-sm text-brand-gold font-bold">₹{item.price * item.quantity}</span>
                             </div>
                           ))
                         )}
                         <div className="pt-6 border-t border-white/5 flex justify-between items-center">
-                          <span className="text-xs uppercase tracking-[0.2em] text-white/40">Total Acquisition Value</span>
-                          <span className="text-xl font-bold text-brand-gold font-display">${order.total}</span>
+                          <span className="text-xs uppercase tracking-[0.2em] text-white/40 font-bold">Total Amount</span>
+                          <span className="text-xl font-bold text-brand-gold font-display">₹{order.total}</span>
                         </div>
                       </div>
                     </div>

@@ -1,3 +1,10 @@
+export interface Category {
+  id: string;
+  title: string;
+  image: string;
+  description: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -16,6 +23,7 @@ export interface Product {
   care: string;
   isFeatured: boolean;
   isNew: boolean;
+  stock: number;
 }
 
 export interface CartItem {
@@ -38,6 +46,7 @@ export interface User {
   displayName: string | null;
   email: string | null;
   photoURL: string | null;
+  isAdmin?: boolean;
 }
 
 export interface Order {

@@ -1,285 +1,216 @@
-import { SELLER_CONTACT } from "../config/seller";
-import { useState } from "react";
-import { useShop } from "../context/ShopContext";
-import { motion, AnimatePresence } from "motion/react";
+import React, { useState } from "react";
 import {
-  CreditCard,
-  Truck,
   CheckCircle2,
-  Wallet,
+  ArrowLeft,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  Send,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import confetti from "canvas-confetti";
+import { useShop } from "../context/ShopContext";
+import { useNavigate, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
 import ParticleEmbers from "../components/ParticleEmbers";
-
-type Step = "address" | "review" | "payment" | "confirmed";
-type PaymentMethod = "upi" | "card" | "cod";
+import emailjs from "@emailjs/browser";
 
 export default function Checkout() {
-  const { cart, clearCart, addOrder } = useShop();
+  const { cart, clearCart } = useShop();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState<Step>("address");
-  const [orderProcessed, setOrderProcessed] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("upi");
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
+  const [formData, setFormData] = useState({
     name: "",
-    phone: "",
     email: "",
+    phone: "",
     address: "",
-    city: "",
-    pincode: "",
   });
 
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shipping = subtotal > 999 ? 0 : 99;
   const total = subtotal + shipping;
 
-  const isFormValid =
-    form.name && form.phone && form.email && form.address && form.city && form.pincode;
+  const handleConfirmOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleOrderConfirm = () => {
-    setOrderProcessed(true);
-    setStep("confirmed");
+    if (!formData.name || !formData.phone || !formData.address || !formData.email) {
+      alert("Please fill all details");
+      return;
+    }
 
-    const newOrder = {
-      id: `#RC-${Math.floor(100000 + Math.random() * 900000)}`,
-      date: new Date().toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      items: [...cart],
-      total,
-      status: "Processing" as const,
-      paymentMethod,
+    if (cart.length === 0) {
+      alert("Cart is empty");
+      return;
+    }
+
+    setLoading(true);
+
+    const orderId = "ORD-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+
+    // ========================
+    // CLEAN PRODUCT FORMAT
+    // ========================
+    const cartItemsText = cart
+      .map(
+        (item) =>
+          `• ${item.name}
+  Size: ${item.selectedSize || "N/A"}
+  Qty: ${item.quantity}
+  Price: ₹${item.price * item.quantity}`
+      )
+      .join("<br/><br/>");
+
+    // ========================
+    // WHATSAPP MESSAGE
+    // ========================
+    const whatsappMessage = `
+🛍 *NEW ORDER - RECREATE873*
+
+Order ID: ${orderId}
+
+👤 *Customer Details*
+Name: ${formData.name}
+Phone: ${formData.phone}
+Email: ${formData.email}
+Address: ${formData.address}
+
+📦 *Products*
+${cart.map(item =>
+  `• ${item.name} (Size: ${item.selectedSize || "N/A"}) x${item.quantity} = ₹${item.price * item.quantity}`
+).join("\n")}
+
+💰 *Total: ₹${total}*
+`;
+
+    const whatsappUrl = `https://wa.me/917075192712?text=${encodeURIComponent(
+      whatsappMessage
+    )}`;
+
+    // ========================
+    // EMAILJS PAYLOAD
+    // ========================
+    const emailParams = {
+      order_id: orderId,
+      customer_name: formData.name,
+      customer_email: formData.email,
+      customer_phone: formData.phone,
+      customer_address: formData.address,
+
+      order_items: cartItemsText,
+      total_price: total,
     };
 
-    addOrder(newOrder);
-    clearCart();
+    try {
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ["#ff4500", "#f5c518", "#ffcf96"],
-    });
+      // Email ALWAYS attempt (no silent failure)
+      if (serviceId && templateId && publicKey) {
+        await emailjs.send(serviceId, templateId, emailParams, publicKey);
+      } else {
+        console.warn("EmailJS not configured properly");
+      }
+
+      // success flow
+      clearCart();
+      setIsSuccess(true);
+
+      // open WhatsApp
+      window.open(whatsappUrl, "_blank");
+    } catch (err) {
+      console.error("Order error:", err);
+      alert("Something went wrong while placing order.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (cart.length === 0 && !orderProcessed) {
-    navigate("/");
-    return null;
+  if (cart.length === 0 && !isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white bg-black">
+        <div className="text-center">
+          <h2 className="text-2xl mb-4">Cart is empty</h2>
+          <button onClick={() => navigate("/")} className="underline text-gold">
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-20 relative overflow-hidden">
-
+    <div className="min-h-screen bg-black text-white pb-20">
       <ParticleEmbers />
 
-      {/* HEADER */}
-      <div className="text-center mb-14">
-        <h1 className="text-4xl md:text-5xl font-serif text-gold">
-          Atelier Checkout
-        </h1>
-        <p className="text-white/40 mt-3 text-xs tracking-[0.3em] uppercase">
-          Secure luxury purchasing experience
-        </p>
-      </div>
+      <div className="max-w-4xl mx-auto px-6 pt-32 relative z-10">
 
-      <div className="flex flex-col lg:flex-row gap-16">
+        {!isSuccess ? (
+          <motion.form
+            onSubmit={handleConfirmOrder}
+            className="space-y-6"
+          >
+            <h1 className="text-4xl font-serif mb-6">Checkout</h1>
 
-        {/* LEFT SIDE */}
-        <div className="flex-[2]">
+            <input
+              placeholder="Name"
+              className="w-full p-4 bg-white/10 rounded-xl"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
 
-          <AnimatePresence mode="wait">
+            <input
+              placeholder="Phone"
+              className="w-full p-4 bg-white/10 rounded-xl"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
 
-            {/* ADDRESS */}
-            {step === "address" && (
-              <motion.div className="space-y-8">
-                <h2 className="text-2xl font-serif">Delivery Details</h2>
+            <input
+              placeholder="Email"
+              className="w-full p-4 bg-white/10 rounded-xl"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
 
-                <div className="grid md:grid-cols-2 gap-5">
-                  {Object.entries(form).map(([key, value]) => (
-                    <input
-                      key={key}
-                      value={value}
-                      onChange={(e) =>
-                        setForm({ ...form, [key]: e.target.value })
-                      }
-                      placeholder={key.toUpperCase()}
-                      className="p-4 bg-white/5 border border-white/10 rounded-xl text-sm focus:border-gold outline-none"
-                    />
-                  ))}
-                </div>
+            <textarea
+              placeholder="Address"
+              className="w-full p-4 bg-white/10 rounded-xl"
+              value={formData.address}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
+            />
 
-                <button
-                  onClick={() => setStep("review")}
-                  disabled={!isFormValid}
-                  className="w-full py-4 bg-ember text-black font-bold rounded-xl disabled:opacity-40"
-                >
-                  Continue
-                </button>
-              </motion.div>
-            )}
-
-            {/* REVIEW */}
-            {step === "review" && (
-              <motion.div className="space-y-6">
-                <h2 className="text-2xl font-serif">Order Review</h2>
-
-                {cart.map((item) => (
-                  <div key={item.id} className="flex gap-4 glass p-4 rounded-xl">
-                    <img src={item.images[0]} className="w-20 h-24 object-cover rounded" />
-                    <div>
-                      <p className="font-serif">{item.name}</p>
-                      <p className="text-sm text-white/40">Qty: {item.quantity}</p>
-                      <p className="text-ember">₹{item.price * item.quantity}</p>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex gap-4">
-                  <button onClick={() => setStep("address")} className="flex-1 py-4 glass">
-                    Back
-                  </button>
-                  <button onClick={() => setStep("payment")} className="flex-1 py-4 bg-gold text-black">
-                    Payment
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* PAYMENT */}
-            {step === "payment" && (
-              <motion.div className="space-y-6">
-                <h2 className="text-2xl font-serif">Payment Method</h2>
-
-                {[
-                  { id: "upi", label: "UPI", icon: <Wallet /> },
-                  { id: "card", label: "Card", icon: <CreditCard /> },
-                  { id: "cod", label: "Cash on Delivery", icon: <Truck /> },
-                ].map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => setPaymentMethod(p.id as PaymentMethod)}
-                    className={`p-4 border rounded-xl cursor-pointer flex justify-between ${
-                      paymentMethod === p.id ? "border-gold" : "border-white/10"
-                    }`}
-                  >
-                    <span className="flex gap-3 items-center">
-                      {p.icon} {p.label}
-                    </span>
-                    {paymentMethod === p.id && <CheckCircle2 />}
-                  </div>
-                ))}
-
-                <div className="flex gap-4">
-                  <button onClick={() => setStep("review")} className="flex-1 py-4 glass">
-                    Back
-                  </button>
-                  <button
-                    onClick={handleOrderConfirm}
-                    className="flex-1 py-4 bg-ember text-black font-bold"
-                  >
-                    Place Order
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* CONFIRMED */}
-            {step === "confirmed" && (
-              <motion.div className="text-center space-y-8">
-                <CheckCircle2 className="w-20 h-20 text-gold mx-auto" />
-                <h2 className="text-4xl font-serif">Order Placed!</h2>
-                <button onClick={() => navigate("/")} className="py-4 px-8 bg-gold text-black rounded-xl">
-                  Continue Shopping
-                </button>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-        </div>
-
-        {/* RIGHT SIDEBAR */}
-        {step !== "confirmed" && (
-          <div className="flex-1">
-            <div className="sticky top-32 glass p-8 rounded-2xl space-y-8">
-
-              <h3 className="text-sm uppercase tracking-[0.4em] text-gold/80 border-b border-white/10 pb-4">
-                Atelier Manifest
-              </h3>
-
-              <div className="space-y-4 text-xs">
-
-                <div className="flex justify-between text-white/40">
-                  <span>Couture Value</span>
-                  <span className="text-white">₹{subtotal}</span>
-                </div>
-
-                <div className="flex justify-between text-white/40">
-                  <span>Global Logistics</span>
-                  <span className="text-white">
-                    {shipping === 0 ? "Complimentary" : `₹${shipping}`}
-                  </span>
-                </div>
-
-                <div className="pt-4 border-t border-white/10 flex justify-between">
-                  <span className="text-white/50 uppercase tracking-[0.2em]">
-                    Total Exchange
-                  </span>
-                  <span className="text-2xl font-serif text-ember">
-                    ₹{total}
-                  </span>
-                </div>
-
-              </div>
-
-              {/* GILDED CODE */}
-              <input
-                type="text"
-                placeholder="GILDED CODE"
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-[10px] uppercase tracking-[0.3em]"
-              />
-
-              {/* SELLER CONTACT (FINAL FIXED VERSION) */}
-              <div className="pt-4 border-t border-white/10 text-xs space-y-3 text-white/50">
-
-                <p className="text-gold/70 uppercase tracking-[0.3em] text-[10px]">
-                  Seller Support
-                </p>
-
-                <a href={`tel:${SELLER_CONTACT.phone}`} className="block hover:text-white">
-                  📞 {SELLER_CONTACT.phone}
-                </a>
-
-                <a
-https://wa.me/${SELLER_CONTACT.whatsapp}?text=Hi%20I%20want%20to%20place%20an%20order.%0A%0AName:%20${form.name}%0APhone:%20${form.phone}%0AAddress:%20${form.address}%0ACity:%20${form.city}%0APincode:%20${form.pincode}%0A%0ATotal:%20₹${total}%0APayment:%20${paymentMethod.toUpperCase()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block hover:text-green-400"
-                >
-                  💬 WhatsApp Support
-                </a>
-
-                <a
-                  href={`mailto:${SELLER_CONTACT.email}?subject=Order%20Support`}
-                  className="block hover:text-blue-300"
-                >
-                  ✉️ {SELLER_CONTACT.email}
-                </a>
-
-                <p className="text-[10px] text-white/30">
-                  {SELLER_CONTACT.supportHours}
-                </p>
-
-              </div>
-
+            <div className="bg-white/5 p-4 rounded-xl">
+              <p>Subtotal: ₹{subtotal}</p>
+              <p>Shipping: ₹{shipping}</p>
+              <p className="text-gold text-xl">Total: ₹{total}</p>
             </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gold text-black py-4 rounded-xl font-bold"
+            >
+              {loading ? "Processing..." : "Place Order"}
+            </button>
+          </motion.form>
+        ) : (
+          <div className="text-center space-y-6">
+            <CheckCircle2 className="mx-auto text-green-500 w-20 h-20" />
+            <h2 className="text-3xl">Order Placed Successfully</h2>
+
+            <button
+              onClick={() => navigate("/")}
+              className="bg-white text-black px-6 py-3 rounded-xl"
+            >
+              Return to Store
+            </button>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -23,15 +23,15 @@ export default function Cart() {
         >
           <ShoppingCart className="w-12 h-12 text-ember" />
         </motion.div>
-        <h2 className="text-6xl md:text-8xl font-display gold-gradient-text mb-8">Empty Aura</h2>
+        <h2 className="text-6xl md:text-8xl font-display gold-gradient-text mb-8">Cart is Empty</h2>
         <p className="text-blush/40 font-serif text-2xl italic tracking-widest mb-16 max-w-lg mx-auto leading-relaxed">
-          "The first light of dawn finds an empty shelf. Your collection journey awaits its beginning."
+          "Your collection journey awaits its beginning. Browse our store to add items."
         </p>
         <Link 
           to="/" 
           className="inline-flex items-center space-x-4 px-12 py-5 bg-gradient-to-r from-ember to-glow text-dawn font-accent font-bold uppercase tracking-[0.4em] text-[10px] rounded-2xl hover:shadow-glow transition-all"
         >
-          <span>Begin Acquisition</span>
+          <span>Continue Shopping</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -43,8 +43,8 @@ export default function Cart() {
       <ParticleEmbers />
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-24 border-b border-white/5 pb-10">
         <div>
-          <h2 className="text-6xl md:text-8xl font-display gold-gradient-text">Artisan Palettes</h2>
-          <p className="font-label text-silk italic text-2xl tracking-widest mt-4">Selected artifacts of the Sun.</p>
+          <h2 className="text-6xl md:text-8xl font-serif text-white">Your Cart</h2>
+          <p className="font-label text-silk italic text-2xl tracking-widest mt-4">Review your selected products.</p>
         </div>
       </div>
 
@@ -63,7 +63,6 @@ export default function Cart() {
               >
                 <Link to={`/product/${item.id}`} className="w-32 h-44 md:w-56 md:h-72 rounded-[40px] overflow-hidden flex-shrink-0 glass border border-white/10 relative">
                   <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-dawn/60 to-transparent" />
                 </Link>
                 
                 <div className="flex-1 min-w-0 py-4 flex flex-col justify-between h-44 md:h-72">
@@ -76,11 +75,6 @@ export default function Cart() {
                         <span className="w-1.5 h-1.5 bg-ember rounded-full mr-2" />
                         Size: {item.selectedSize}
                       </span>
-                      <div className="flex items-center">
-                        <span className="w-1.5 h-1.5 bg-gold rounded-full mr-2" />
-                        Aura:
-                        <div className="w-4 h-4 rounded-full ml-3 border border-white/20" style={{ backgroundColor: item.selectedColor }} />
-                      </div>
                     </div>
                   </div>
                   
@@ -90,7 +84,7 @@ export default function Cart() {
                       <span className="w-12 text-center text-lg font-display tracking-widest">{item.quantity}</span>
                       <button onClick={() => updateQuantity(item.id, item.selectedSize, item.selectedColor, 1)} className="p-3 text-ember hover:text-gold transition-colors"><Plus className="w-5 h-5" /></button>
                     </div>
-                    <span className="text-3xl font-display text-ember">₹{item.price * item.quantity}</span>
+                    <span className="text-3xl font-bold text-ember">₹{item.price * item.quantity}</span>
                   </div>
                 </div>
 
@@ -110,43 +104,34 @@ export default function Cart() {
         {/* Order Summary */}
         <div className="flex-1">
           <div className="sticky top-32 glass p-12 rounded-[50px] border-gold/10 space-y-12">
-            <h3 className="text-3xl font-serif text-gold border-b border-white/5 pb-8 italic">Atelier Manifest</h3>
+            <h3 className="text-3xl font-serif text-gold border-b border-white/5 pb-8 italic">Order Summary</h3>
             
             <div className="space-y-8">
-              <div className="flex justify-between items-center text-xs text-pearl/40 uppercase tracking-[0.3em]">
-                <span>Couture Value</span>
+              <div className="flex justify-between items-center text-xs text-pearl/40 uppercase tracking-[0.3em] font-bold">
+                <span>Subtotal</span>
                 <span className="text-pearl">₹{subtotal}</span>
               </div>
-              <div className="flex justify-between items-center text-xs text-pearl/40 uppercase tracking-[0.3em]">
-                <span>Global Logistics</span>
-                <span className="text-pearl">{shipping === 0 ? "Complimentary" : `₹${shipping}`}</span>
+              <div className="flex justify-between items-center text-xs text-pearl/40 uppercase tracking-[0.3em] font-bold">
+                <span>Shipping</span>
+                <span className="text-pearl">{shipping === 0 ? "FREE" : `₹${shipping}`}</span>
               </div>
               <div className="pt-10 border-t border-white/10 flex justify-between items-end">
-                <span className="font-accent text-[10px] uppercase tracking-[0.4em] text-white">Total Exchange</span>
-                <span className="text-5xl font-display text-ember">₹{total}</span>
+                <span className="font-accent text-[10px] uppercase tracking-[0.4em] text-white font-bold">Total Amount</span>
+                <span className="text-5xl font-bold text-ember">₹{total}</span>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="relative group">
-                <input 
-                  type="text" 
-                  placeholder="GILDED CODE" 
-                  className="w-full bg-dawn/40 border border-white/5 rounded-2xl py-5 px-8 text-[11px] font-bold tracking-[0.4em] uppercase focus:border-glow outline-none transition-all"
-                />
-                <button className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] uppercase font-bold tracking-[0.3em] text-gold hover:text-ember transition-colors">Apply</button>
-              </div>
-              
               <button
                 onClick={() => navigate("/checkout")}
-                className="w-full h-20 bg-gradient-to-r from-ember to-glow text-dawn font-accent text-xs font-bold uppercase tracking-[0.5em] rounded-2xl shadow-2xl shadow-ember/30 hover:scale-[1.02] transition-all flex items-center justify-center space-x-4"
+                className="w-full h-20 bg-gold text-black font-accent text-xs font-bold uppercase tracking-[0.5em] rounded-2xl shadow-2xl shadow-gold/10 hover:scale-[1.02] transition-all flex items-center justify-center space-x-4"
               >
                 <ShoppingBag className="w-6 h-6" />
-                <span>Secure Checkout</span>
+                <span>Go to Checkout</span>
               </button>
               
               <p className="text-[10px] text-white/20 text-center uppercase tracking-[0.3em] font-bold px-8 leading-relaxed">
-                Prices inclusive of artistry tax & digital security
+                Prices inclusive of all taxes.
               </p>
             </div>
           </div>

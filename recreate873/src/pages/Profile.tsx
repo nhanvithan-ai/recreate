@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useShop } from "../context/ShopContext";
 import { 
   Package, Heart, MapPin, CreditCard, Settings, LogOut, 
@@ -7,7 +7,8 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
-import { PRODUCTS } from "../data";
+import { subscribeToProducts } from "../services/productService";
+import { Product } from "../types";
 
 type Tab = "orders" | "wishlist" | "addresses" | "payments" | "settings";
 
@@ -15,13 +16,19 @@ export default function Profile() {
   const { user, logout, orders, wishlist } = useShop();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("orders");
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const unsub = subscribeToProducts(setProducts);
+    return () => unsub();
+  }, []);
 
   if (!user) {
     navigate("/");
     return null;
   }
 
-  const wishlistedProducts = PRODUCTS.filter(p => wishlist.includes(p.id));
+  const wishlistedProducts = products.filter(p => wishlist.includes(p.id));
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-20 min-h-screen">
@@ -75,7 +82,7 @@ export default function Profile() {
             />
             <button 
               onClick={() => {
-                if(confirm("Are you sure you want to dissipate your aura?")) {
+                if(confirm("Are you sure you want to logout?")) {
                   logout();
                   navigate("/");
                 }
@@ -94,19 +101,21 @@ export default function Profile() {
             {activeTab === "orders" && (
               <motion.div key="orders" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-4xl font-serif">Order Chronicle</h3>
-                  <span className="text-[10px] font-accent text-gold/40 uppercase tracking-widest">{orders.length} Sacred Items</span>
+                  <h3 className="text-4xl font-serif">Order History</h3>
+                  <span className="text-[10px] font-accent text-gold/40 uppercase tracking-widest">{orders.length} Items</span>
                 </div>
                 
                 {orders.length === 0 ? (
                   <div className="py-20 text-center space-y-8 glass rounded-[40px] border-white/5">
-                    <p className="text-xl font-serif italic text-white/20">"No orders yet — start your heritage journey!"</p>
-                    <button onClick={() => navigate("/")} className="px-12 py-4 bg-gradient-to-r from-ember to-glow text-dawn rounded-full font-accent text-[10px] uppercase tracking-[0.3em] font-bold">Begin Exploration</button>
+                    <p className="text-xl font-serif italic text-white/20">"No orders yet — start shopping!"</p>
+                    <button onClick={() => navigate("/")} className="px-12 py-4 bg-gradient-to-r from-ember to-glow text-dawn rounded-full font-accent text-[10px] uppercase tracking-[0.3em] font-bold">Shop Now</button>
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {orders.map(order => (
-                      <OrderCard key={order.id} order={order} />
+                    {orders.map((order, idx) => (
+                      <div key={order.id || idx}>
+                        <OrderCard order={order} />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -116,17 +125,19 @@ export default function Profile() {
             {activeTab === "wishlist" && (
               <motion.div key="wishlist" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-4xl font-serif">My Curation</h3>
+                  <h3 className="text-4xl font-serif">My Wishlist</h3>
                   <span className="text-[10px] font-accent text-gold/40 uppercase tracking-widest">{wishlist.length} Items</span>
                 </div>
                 {wishlistedProducts.length === 0 ? (
                   <div className="py-20 text-center space-y-8 glass rounded-[40px] border-white/5">
-                    <p className="text-xl font-serif italic text-white/20">"Your wishlit is empty."</p>
+                    <p className="text-xl font-serif italic text-white/20">"Your wishlist is empty."</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
-                    {wishlistedProducts.map(p => (
-                      <ProductCard key={p.id} product={p} />
+                    {wishlistedProducts.map((p, idx) => (
+                      <div key={p.id || idx}>
+                        <ProductCard product={p} />
+                      </div>
                     ))}
                   </div>
                 )}
@@ -136,7 +147,7 @@ export default function Profile() {
             {activeTab === "addresses" && (
               <motion.div key="addresses" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-4xl font-serif">Sanctuaries</h3>
+                  <h3 className="text-4xl font-serif">Addresses</h3>
                   <button className="flex items-center space-x-2 text-[10px] font-accent text-gold uppercase tracking-[0.3em] hover:text-ember transition-colors">
                     <Plus className="w-4 h-4" />
                     <span>New Address</span>
@@ -144,7 +155,7 @@ export default function Profile() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <AddressCard label="Home" address="204 Sky High Apts, Jubilee Hills" city="Hyderabad, TS 500033" isDefault />
-                  <AddressCard label="Atelier" label2="(Office)" address="Sabyasachi Lane, Banjara Hills" city="Hyderabad, TS 500034" />
+                  <AddressCard label="Office" address="Sabyasachi Lane, Banjara Hills" city="Hyderabad, TS 500034" />
                 </div>
               </motion.div>
             )}
@@ -152,7 +163,7 @@ export default function Profile() {
             {activeTab === "payments" && (
               <motion.div key="payments" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-4xl font-serif">Treasury Methods</h3>
+                  <h3 className="text-4xl font-serif">Payment Methods</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <PaymentMethodCard type="UPI" detail="vikram@okaxis" provider="Axis Bank" />
@@ -164,29 +175,29 @@ export default function Profile() {
             {activeTab === "settings" && (
               <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-12">
                 <div className="flex items-center justify-between border-b border-white/5 pb-8">
-                  <h3 className="text-4xl font-serif">Essence Config</h3>
+                  <h3 className="text-4xl font-serif">Account Settings</h3>
                 </div>
                 <div className="glass p-12 rounded-[40px] border-white/5 space-y-12">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="space-y-4">
-                      <label className="text-[10px] font-accent uppercase tracking-[0.3em] text-pearl/40">Display Name</label>
+                      <label className="text-[10px] font-accent uppercase tracking-[0.3em] text-pearl/40">Full Name</label>
                       <input type="text" defaultValue={user.displayName || ""} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm focus:border-gold outline-none" />
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-accent uppercase tracking-[0.3em] text-pearl/40">Phone Aura</label>
-                      <input type="text" placeholder="+91 91XXX XXXXX" className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm focus:border-gold outline-none" />
+                      <label className="text-[10px] font-accent uppercase tracking-[0.3em] text-pearl/40">Phone Number</label>
+                      <input type="text" placeholder="+91 7075192712" className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm focus:border-gold outline-none" />
                     </div>
                   </div>
                   <div className="space-y-6">
-                    <h4 className="text-xs font-accent uppercase tracking-[0.2em] text-gold">Notification Channels</h4>
+                    <h4 className="text-xs font-accent uppercase tracking-[0.2em] text-gold">Notifications</h4>
                     <div className="flex flex-wrap gap-8">
-                       <Toggle label="Email Manifest" active />
-                       <Toggle label="WhatsApp Envoys" active />
-                       <Toggle label="SMS Whispers" />
+                       <Toggle label="Email Notifications" active />
+                       <Toggle label="WhatsApp Info" active />
+                       <Toggle label="SMS Alerts" />
                     </div>
                   </div>
                   <div className="pt-8 border-t border-white/5">
-                    <button className="bg-gradient-to-r from-ember to-glow text-dawn px-12 py-4 rounded-xl font-accent text-[10px] uppercase tracking-[0.3em] font-bold">Commit Changes</button>
+                    <button className="bg-gold text-black px-12 py-4 rounded-xl font-accent text-[10px] uppercase tracking-[0.3em] font-bold">Save Changes</button>
                   </div>
                 </div>
               </motion.div>
@@ -245,7 +256,7 @@ function OrderCard({ order }: { order: any }) {
             }`}>
               {order.status}
             </span>
-            <p className="text-xl font-display text-ember mt-2">₹{order.total}</p>
+            <p className="text-xl font-bold text-ember mt-2">₹{order.total}</p>
           </div>
           <button 
             onClick={() => setExpanded(!expanded)}
@@ -261,25 +272,24 @@ function OrderCard({ order }: { order: any }) {
           <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden bg-white/5 p-8 border-t border-white/10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                <div className="space-y-6">
-                  <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em]">Itemized Manifest</h5>
+                  <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em] font-bold">Product List</h5>
                   {order.items.map((item: any) => (
                     <div key={item.id} className="flex justify-between items-center py-2 border-b border-white/5">
                       <span className="text-sm font-serif italic text-pearl/60">{item.name} (x{item.quantity})</span>
-                      <span className="text-xs font-display text-blush">₹{item.price * item.quantity}</span>
+                      <span className="text-xs font-bold text-blush">₹{item.price * item.quantity}</span>
                     </div>
                   ))}
                </div>
                <div className="space-y-8">
                   <div className="space-y-4">
-                    <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em]">Delivery Sanctum</h5>
+                    <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em] font-bold">Shipping Address</h5>
                     <p className="text-sm text-pearl/40 leading-relaxed italic">
-                      Vikram Aditya<br />
-                      204 Sky High Apts, Jubilee Hills<br />
-                      Hyderabad, TS 500033
+                      {order.customer?.name || "Customer"}<br />
+                      {order.customer?.address || "Address details"}
                     </p>
                   </div>
                   <div className="space-y-4">
-                    <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em]">Tracing Stepper</h5>
+                    <h5 className="text-[10px] font-accent text-gold uppercase tracking-[0.2em] font-bold">Order Status</h5>
                     <div className="flex items-center justify-between">
                        <div className="flex flex-col items-center space-y-2">
                          <div className="w-3 h-3 rounded-full bg-ember shadow-glow" />
