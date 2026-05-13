@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Fashion product available for sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["men", "women", "kids"] },
+        "subcategory": { "type": "string" },
+        "price": { "type": "number" },
+        "originalPrice": { "type": "number" },
+        "discount": { "type": "number" },
+        "fabric": { "type": "string" },
+        "sizes": { "type": "array", "items": { "type": "string" } },
+        "colors": { "type": "array", "items": { "type": "string" } },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "rating": { "type": "number" },
+        "reviews": { "type": "number" },
+        "description": { "type": "string" },
+        "care": { "type": "string" },
+        "isFeatured": { "type": "boolean" },
+        "isNew": { "type": "boolean" },
+        "stock": { "type": "number" }
+      },
+      "required": ["id", "name", "category", "price", "images", "sizes"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["id", "title"]
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Collection of all products"
+    },
+    "categories": {
+      "schema": "Category",
+      "description": "Collection of all categories"
+    }
+  }
+}
